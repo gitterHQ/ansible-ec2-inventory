@@ -26,6 +26,7 @@ AWS.config.update({region: opts.region });
 var ec2 = new AWS.EC2({ });
 
 var ansibleGroups = {};
+var hostsMeta = {};
 
 function getTagValue(tags, Name) {
   var tag = tags.filter(function(t) {
@@ -51,6 +52,12 @@ function addHostToGroup(group, host) {
   }
 }
 
+function createHostsMeta(instance) {
+  return {
+    ansible_ssh_port: instance.PrivateIpAddress
+  };
+}
+
 ec2.describeInstances({}, function(err, result) {
   if(err) return die(err);
 
@@ -66,6 +73,9 @@ ec2.describeInstances({}, function(err, result) {
 
   instances.forEach(function(i) {
     var name = getTagValue(i.Tags, 'Name');
+
+    hostsMeta[name] = createHostsMeta(i);
+
     var groups = getGroups(i.Tags);
     if(name) {
       addHostToGroup('all', name);
@@ -77,6 +87,8 @@ ec2.describeInstances({}, function(err, result) {
       }
     }
   });
+
+  ansibleGroups._meta = hostsMeta;
 
   console.log(JSON.stringify(ansibleGroups, null, " "));
 });
