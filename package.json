@@ -1,0 +1,34 @@
+{
+  "name": "ansible-ec2-inventory",
+  "version": "0.0.1",
+  "description": "Ansible dynamic inventory that uses EC2 tags to keep track of names and groups",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "ec2-tag-inventory": "./ec2-tag-inventory.js",
+    "convert-inventory-to-tags": "./convert-inventory-to-tags.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitterHQ/ansible-ec2-inventory"
+  },
+  "keywords": [
+    "ansible",
+    "dynamic",
+    "inventory",
+    "ec2"
+  ],
+  "author": "Andrew Newdigate",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gitterHQ/ansible-ec2-inventory/issues"
+  },
+  "homepage": "https://github.com/gitterHQ/ansible-ec2-inventory",
+  "dependencies": {
+    "nomnom": "^1.8.0",
+    "aws-sdk": "^2.0.14",
+    "ini": "^1.2.1"
+  }
+}
