@@ -84,6 +84,8 @@ ec2.describeInstances({}, function(err, result) {
     }
   });
 
+  console.log(hosts);
+
   Object.keys(hosts).forEach(function(host) {
     var groups = hosts[host];
     groups.sort();
@@ -95,7 +97,7 @@ ec2.describeInstances({}, function(err, result) {
       var newGroupList = groupList ? groupList + "," + group : group;
       if(newGroupList.length >= 255) {
         lists.push(groupList);
-        groupList = "";
+        groupList = group;
       } else {
         groupList = newGroupList;
       }
@@ -130,4 +132,3 @@ function die(err) {
   console.error(err.stack);
   process.exit(1);
 }
-// console.log(JSON.stringify(hosts, null, "  "));
