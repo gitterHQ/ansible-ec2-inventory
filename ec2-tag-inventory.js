@@ -2,11 +2,17 @@
 /* jshint node:true */
 "use strict";
 
+var fs = require('fs');
+
 var opts = require("nomnom")
    .option('env', {
       abbr: 'e',
       default: 'beta',
       help: 'Environment'
+   })
+   .option('map', {
+      abbr: 'm',
+      help: 'Specify a role mapping file'
    })
    .option('list', {
       flag: true
@@ -27,6 +33,12 @@ var ec2 = new AWS.EC2({ });
 
 var ansibleGroups = {};
 var hostsMeta = {};
+
+var roleMapping;
+if(opts.map) {
+  roleMapping = JSON.parse(fs.readFileSync(opts.map, 'utf-8'));
+}
+
 
 function getTagValue(tags, Name) {
   var tag = tags.filter(function(t) {
@@ -54,8 +66,22 @@ function addHostToGroup(group, host) {
 
 function createHostsMeta(instance) {
   return {
-    ansible_ssh_port: instance.PrivateIpAddress
+    ansible_ssh_host: instance.PrivateIpAddress
   };
+}
+
+function getRoleMappedGroups(role, env) {
+  var result = ['all', 'shared-secrets'];
+  if(env) {
+    result.push(env + '-servers');
+    result.push(env + '-secrets');
+  }
+
+  if(!roleMapping) return result;
+  result = result.concat(roleMapping['all']);
+  result = result.concat(roleMapping[role]);
+
+  return result;
 }
 
 ec2.describeInstances({}, function(err, result) {
@@ -73,18 +99,34 @@ ec2.describeInstances({}, function(err, result) {
 
   instances.forEach(function(i) {
     var name = getTagValue(i.Tags, 'Name');
+    var role = getTagValue(i.Tags, 'Role');
+    var env = getTagValue(i.Tags, 'Env');
 
     hostsMeta[name] = createHostsMeta(i);
 
-    var groups = getGroups(i.Tags);
     if(name) {
-      addHostToGroup('all', name);
+      var uniqGroups = {};
+      var groups = getGroups(i.Tags);
+      var roleMappedGroups = getRoleMappedGroups(role, env);
 
       if(groups) {
         groups.forEach(function(g) {
-          addHostToGroup(g.trim(), name);
+          var group = g.trim();
+          if(uniqGroups[group]) return;
+          uniqGroups[group] = 1;
+
+          addHostToGroup(group, name);
         });
       }
+
+      roleMappedGroups.forEach(function(group) {
+        if(uniqGroups[group]) return;
+        uniqGroups[group] = 1;
+
+        addHostToGroup(group, name);
+      });
+
+
     }
   });
 
