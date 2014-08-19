@@ -33,6 +33,7 @@ var ec2 = new AWS.EC2({ });
 
 var ansibleGroups = {};
 var hostsMeta = {};
+ansibleGroups._meta = { hostvars: hostsMeta };
 
 var roleMapping;
 if(opts.map) {
@@ -130,7 +131,6 @@ ec2.describeInstances({}, function(err, result) {
     }
   });
 
-  ansibleGroups._meta = hostsMeta;
 
   console.log(JSON.stringify(ansibleGroups, null, " "));
 });
